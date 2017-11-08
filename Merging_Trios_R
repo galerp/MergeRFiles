@@ -1,0 +1,64 @@
+```
+setwd("~/Dropbox/Literature, presentations Helbig group/galerp/DataIDs")
+
+Master= read.csv("MasterID_List.csv", stringsAsFactors = F)
+Trio=read.csv("Trio_sample_table_edited.csv", stringsAsFactors = F)
+
+
+TrioMaster=merge(x=Master, y=Trio, by.x="famID", by.y="famID", all=T)
+
+
+View(Master)
+nrow(TrioMaster)
+
+View(TrioMaster)
+
+
+
+write.csv(TrioMaster, "TrioMaster.csv", row.names=FALSE)
+
+#upload BENCH phenotype data
+library(readr)
+RES_phen <- read.xls("euroepinomics_bench_dump_clinical_data_20140829.xlsx")
+View(RES_phen)
+
+#upload BENCH HPO data
+RES_hpo <- read.xls("euroepinomics_bench_dump_phenotype_export_20140829.xlsx")
+
+small_id <- TrioMaster[,c("famID","primary_ID")]
+
+#Trio_phenoypes versus BENCH phenotypes
+pheno <- as.data.frame(unique(RES_phen$Primary.ID)); pheno[,2] <- c("pheno"); names(pheno) <- c("BENCH_pheno","pheno")
+hpo <- as.data.frame(unique(RES_hpo$primid)); hpo[,2] <- c("hpo"); names(hpo) <- c("BENCH_hpo","hpo")
+trio <- as.data.frame(unique(TrioMaster$primary_ID)); trio[,2] <- c("trio"); names(trio) <- c("CHOP_trio","trio")
+
+merge1 <- merge(x=trio, y=pheno, by.x="CHOP_trio",by.y="BENCH_pheno",all=T)
+View(merge1)
+
+merge2 <- merge(x=merge1, y=hpo, by.x="CHOP_trio",by.y="BENCH_hpo",all=T)
+View(merge2)
+
+merge22<-merge(x=merge2, y=small_id, by.x="CHOP_trio", by.y="primary_ID", all=T)
+View(merge22)
+
+merge23<-merge(x=merge22, y=TrioMaster[,c("primary_ID", "trio")], by.x="CHOP_trio", by.y="primary_ID", all=T)
+View(merge23)
+
+
+colnames(merge23)[2]="trio"
+colnames(merge23)[6]="trio_member"
+#On which exome'd patient do we have "any data" on 
+any <- subset(merge2, 
+       (merge2$trio == 'trio' & (merge2$pheno == "pheno" | merge2$hpo == "hpo"))
+       )
+write.csv(merge23, "Trios_Merge2.csv", row.names=FALSE)
+#Maximize the number of "exome'd" trios with existing data
+
+#stop here2               TRIO_Merge
+#improve merge2
+#Add famID to merge2 based on "trio table", and "patient/mother/father")
+#add column (trio_member) <- patient/mother/father
+
+#merge3
+#merge merge2 with RES_69_FAM_and_HPO4 (in Dropbox) by "Family" (famID)
+
